@@ -43,18 +43,13 @@ fn should_serialize_proximity() {
     assert_eq!(query, "query=name:Bob AND name:Alice~4".to_string());
 }
 
-
 #[test]
 fn should_serialize_range() {
-    let query = Person::query_builder()
-        .name_range("Bob", "Baz")
-        .build();
+    let query = Person::query_builder().name_range("Bob", "Baz").build();
 
     assert_eq!(query, "query=name:[Bob TO Baz]".to_string());
 
-    let query = Person::query_builder()
-    .age_range("7", "77")
-    .build();
+    let query = Person::query_builder().age_range("7", "77").build();
 
     assert_eq!(query, "query=age:[7 TO 77]".to_string());
 }
