@@ -3,23 +3,21 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::format_ident;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, Ident, Type};
+use syn::{
+    parse_macro_input, Data, DeriveInput, Field, Fields, Ident, ParenthesizedGenericArguments,
+    PathArguments,
+};
 
-#[proc_macro_derive(QueryBuilder)]
+#[proc_macro_derive(QueryBuilder, attributes(query_builder_ignore, query_builder_rename))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let ident = &input.ident;
     let builder_ident = format_ident!("{}{}", ident, "LuceneQueryBuilder");
 
-    let attributes: Vec<(Ident, Type)> = match input.data {
+    let fields: Vec<Field> = match input.data {
         Data::Struct(struct_) => match struct_.fields {
-            Fields::Named(n) => n
-                .named
-                .iter()
-                .cloned()
-                .map(|field| (field.ident.unwrap().clone(), field.ty.clone()))
-                .collect(),
+            Fields::Named(n) => n.named.iter().cloned().collect(),
             Fields::Unnamed(_) => panic!("Unexpected unnamed field"),
             Fields::Unit => panic!("Unexpected unit"),
         },
@@ -27,17 +25,44 @@ pub fn derive(input: TokenStream) -> TokenStream {
         Data::Union(_) => panic!("The Builder macro is not to be used on union"),
     };
 
-    let attr_names: Vec<Ident> = attributes.iter().cloned().map(|(name, _)| name).collect();
-    let attr_names_range: Vec<Ident> = attributes
+    let field_idents: Vec<Ident> = fields
         .iter()
         .cloned()
-        .map(|(name, _)| format_ident!("{}{}", name, "_range"))
+        .map(|field| {
+            let renamed = field.attrs.iter().find(|attr| {
+                format!("{}", attr.path.segments.first().unwrap().ident) == "query_builder_rename"
+            });
+
+            if let Some(name) = renamed {
+                if let PathArguments::Parenthesized(arg) =
+                    &name.path.segments.first().unwrap().arguments
+                {
+                    println!("SOMETHING HERE");
+                };
+            }
+            field
+        })
+        .filter(|field| {
+            !field
+                .attrs
+                .iter()
+                .map(|attr| format!("{}", attr.path.segments.first().unwrap().ident))
+                .collect::<String>()
+                .contains("query_builder_ignore")
+        })
+        .map(|field| field.ident.unwrap())
         .collect();
 
-    let attr_names_str: Vec<String> = attributes
+    let field_idents_range: Vec<Ident> = field_idents
         .iter()
         .cloned()
-        .map(|(name, _)| format!("{}", name))
+        .map(|name| format_ident!("{}{}", name, "_range"))
+        .collect();
+
+    let field_idents_str: Vec<String> = field_idents
+        .iter()
+        .cloned()
+        .map(|name| format!("{}", name))
         .collect();
 
     let output = quote! {
@@ -48,9 +73,9 @@ pub fn derive(input: TokenStream) -> TokenStream {
             And,
             End
         }
-        
+
         struct QueryString(pub String);
-        
+
         impl fmt::Display for QueryString {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 if self.0.contains(" ") {
@@ -60,8 +85,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
                 }
             }
         }
-        
-        
+
+
         impl fmt::Display for Operator {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 match self {
@@ -86,10 +111,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
         }
 
         impl #builder_ident {
-            #(fn #attr_names(&mut self, value: &str) -> &mut Self {
+            #(fn #field_idents(&mut self, value: &str) -> &mut Self {
                 let value = QueryString(value.into());
 
-                let search = format!("{}:{}",#attr_names_str, value);
+                let search = format!("{}:{}",#field_idents_str, value);
                 if let Some(last) = self.query.last_mut() {
                     last.0 = search;
                 } else {
@@ -99,11 +124,11 @@ pub fn derive(input: TokenStream) -> TokenStream {
                 self
             })*
 
-            #(fn #attr_names_range(&mut self, from: &str, to: &str) -> &mut Self {
+            #(fn #field_idents_range(&mut self, from: &str, to: &str) -> &mut Self {
 
                 let from = QueryString(from.into());
                 let to = QueryString(to.into());
-                let search = format!("{}:[{} TO {}]", #attr_names_str, from, to);
+                let search = format!("{}:[{} TO {}]", #field_idents_str, from, to);
 
                 if let Some(last) = self.query.last_mut() {
                     last.0 = search;

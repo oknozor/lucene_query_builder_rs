@@ -2,8 +2,11 @@ use lucene_query_builder::QueryBuilder;
 
 #[derive(QueryBuilder)]
 struct Person {
+    #[query_builder_rename = "fullname"]
     name: String,
     age: i32,
+    #[query_builder_ignore]
+    ignored: String,
 }
 
 #[test]
