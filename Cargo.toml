@@ -15,5 +15,5 @@ description = "A procmacro derive crate to generate lucene query builder for Rus
 proc-macro = true
 
 [dependencies]
-syn = "1.0.7"
+syn = "1.0.11"
 quote = "1.0.2"
