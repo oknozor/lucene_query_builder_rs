@@ -1,8 +1,9 @@
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use proc_macro2::{Ident, TokenStream as TokenStream2};
+use quote::{format_ident, quote};
+use syn::Field;
 
 pub fn common_functions() -> TokenStream2 {
-     quote! {
+    quote! {
           pub fn or(&mut self) -> &mut Self {
                 if let Some(last) = self.query.last_mut() {
                     last.1 = Operator::Or;
@@ -46,4 +47,29 @@ pub fn common_functions() -> TokenStream2 {
                     .collect::<String>()
             }
     }
+}
+
+pub fn get_non_ignored_fields(field: &Field) -> bool {
+    !field
+        .attrs
+        .iter()
+        .map(|attr| format!("{}", attr.path.segments.first().unwrap().ident))
+        .collect::<String>()
+        .contains("query_builder_ignore")
+}
+
+pub fn idents_to_string(field_idents: &Vec<Ident>) -> Vec<String> {
+    field_idents
+        .iter()
+        .cloned()
+        .map(|name| format!("{}", name))
+        .collect()
+}
+
+pub fn get_suffixed_idents(field_idents: &Vec<Ident>, suffix: &str) -> Vec<Ident> {
+    field_idents
+        .iter()
+        .cloned()
+        .map(|name| format_ident!("{}{}", name, suffix))
+        .collect()
 }
