@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
-use syn::Field;
+use syn::{Field, Meta, MetaNameValue, Lit};
 
 pub fn common_functions() -> TokenStream2 {
     quote! {
@@ -85,6 +85,29 @@ pub fn prelude() -> TokenStream2 {
     }
 }
 
+pub fn get_field_idents(fields: Vec<Field>) -> Vec<Ident> {
+    fields
+        .iter()
+        .cloned()
+        .filter(|field| get_non_ignored_fields(field))
+        .map(|field| {
+            let attributes = get_fields_attrs_meta(&field);
+            let opt_rename = attributes
+                .iter()
+                .map(|meta| parse_renamed(meta))
+                .find(|rename_ident| rename_ident.is_some());
+
+            if let Some(renamed) = opt_rename {
+                renamed.unwrap()
+            } else {
+                field.ident.unwrap()
+            }
+        })
+        .collect()
+}
+
+
+
 pub fn query_builder_fn(ident: &Ident, builder_ident: &Ident) -> TokenStream2 {
     quote! {
         impl #ident {
@@ -167,4 +190,29 @@ pub fn get_suffixed_idents(field_idents: &Vec<Ident>, suffix: &str) -> Vec<Ident
         .cloned()
         .map(|name| format_ident!("{}{}", name, suffix))
         .collect()
+}
+
+pub fn get_fields_attrs_meta(field: &Field) -> Vec<Meta> {
+    field.attrs.iter()
+        .map(|attr| attr.parse_meta())
+        .filter(|attr| attr.is_ok())
+        .map(|attr| attr.unwrap())
+        .collect()
+}
+
+pub fn parse_renamed(attr: &Meta) -> Option<Ident> {
+    match attr {
+        Meta::NameValue(MetaNameValue {
+                            lit: Lit::Str(ref s),
+                            path,
+                            ..
+                        }) => {
+            if path.is_ident("query_builder_rename") {
+                Some(format_ident!("{}", s.value()))
+            } else {
+                panic!("Unable to parse query_builder_rename_value")
+            }
+        }
+        _ => None,
+    }
 }
