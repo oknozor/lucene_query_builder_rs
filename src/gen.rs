@@ -49,6 +49,101 @@ pub fn common_functions() -> TokenStream2 {
     }
 }
 
+pub fn prelude() -> TokenStream2 {
+    quote! {
+        use std::fmt;
+
+        enum Operator {
+            Or,
+            And,
+            End
+        }
+
+        struct QueryString(pub String);
+
+        impl fmt::Display for QueryString {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if self.0.contains(" ") {
+                    write!(f, "\"{}\"", self.0)
+                } else {
+                    write!(f, "{}", self.0)
+                }
+            }
+        }
+
+
+        impl fmt::Display for Operator {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                match self {
+                    Self::Or => write!(f, " OR "),
+                    Self::And => write!(f, " AND "),
+                    Self::End => write!(f, ""),
+                }
+
+            }
+        }
+    }
+}
+
+pub fn query_builder_fn(ident: &Ident, builder_ident: &Ident) -> TokenStream2 {
+    quote! {
+        impl #ident {
+            pub fn query_builder() -> #builder_ident {
+                #builder_ident {
+                    query: vec![]
+                }
+            }
+        }
+    }
+}
+
+pub fn query_builder(builder_ident: &Ident) -> TokenStream2 {
+    quote! {
+        pub struct #builder_ident {
+            query: Vec<(String, Operator)>
+        }
+    }
+}
+
+pub fn query_field_fn(field_idents: &Vec<Ident>) -> TokenStream2 {
+    let field_idents_str = idents_to_string(field_idents);
+
+    quote! {
+       #(fn #field_idents(&mut self, value: &str) -> &mut Self {
+            let value = QueryString(value.into());
+            let search = format!("{}:{}", #field_idents_str, value);
+
+            if let Some(last) = self.query.last_mut() {
+                last.0 = search;
+            } else {
+                self.query.push((search, Operator::End));
+            }
+
+            self
+        })*
+    }
+}
+
+pub fn range_query_field_fn(field_idents: &Vec<Ident>) -> TokenStream2 {
+    let field_idents_range = get_suffixed_idents(field_idents, "_range");
+    let field_idents_str = idents_to_string(field_idents);
+
+    quote! {
+       #(fn #field_idents_range(&mut self, from: &str, to: &str) -> &mut Self {
+            let from = QueryString(from.into());
+            let to = QueryString(to.into());
+            let search = format!("{}:[{} TO {}]", #field_idents_str, from, to);
+
+            if let Some(last) = self.query.last_mut() {
+                last.0 = search;
+            } else {
+                self.query.push((search, Operator::End));
+            }
+            self
+        })*
+    }
+}
+
 pub fn get_non_ignored_fields(field: &Field) -> bool {
     !field
         .attrs
