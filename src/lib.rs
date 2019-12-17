@@ -29,7 +29,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .cloned()
         .map(|field| {
             let renamed = field.attrs.iter().find(|attr| {
-                format!("{}", attr.path.segments.first().unwrap().ident) == "query_builder_rename"
+                format!("{}", attr.path.segments.first().unwrap().ident) == "query_builder_rename".to_string()
             });
 
             if let Some(name) = renamed {
