@@ -126,7 +126,7 @@ pub fn query_builder(builder_ident: &Ident) -> TokenStream2 {
     }
 }
 
-pub fn query_field_fn(field_idents: &Vec<Ident>) -> TokenStream2 {
+pub fn query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
     let field_idents_str = idents_to_string(field_idents);
 
     quote! {
@@ -145,7 +145,7 @@ pub fn query_field_fn(field_idents: &Vec<Ident>) -> TokenStream2 {
     }
 }
 
-pub fn range_query_field_fn(field_idents: &Vec<Ident>) -> TokenStream2 {
+pub fn range_query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
     let field_idents_range = get_suffixed_idents(field_idents, "_range");
     let field_idents_str = idents_to_string(field_idents);
 
@@ -174,7 +174,7 @@ pub fn get_non_ignored_fields(field: &Field) -> bool {
         .contains("query_builder_ignore")
 }
 
-pub fn idents_to_string(field_idents: &Vec<Ident>) -> Vec<String> {
+pub fn idents_to_string(field_idents: &[Ident]) -> Vec<String> {
     field_idents
         .iter()
         .cloned()
@@ -182,7 +182,7 @@ pub fn idents_to_string(field_idents: &Vec<Ident>) -> Vec<String> {
         .collect()
 }
 
-pub fn get_suffixed_idents(field_idents: &Vec<Ident>, suffix: &str) -> Vec<Ident> {
+pub fn get_suffixed_idents(field_idents: &[Ident], suffix: &str) -> Vec<Ident> {
     field_idents
         .iter()
         .cloned()
