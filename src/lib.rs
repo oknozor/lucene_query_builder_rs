@@ -5,10 +5,7 @@ mod gen;
 use proc_macro::TokenStream;
 use quote::format_ident;
 use quote::quote;
-use syn::{
-    parse_macro_input, Data, DeriveInput, Field, Fields, Ident, ParenthesizedGenericArguments,
-    PathArguments,
-};
+use syn::{parse_macro_input, Data, DeriveInput, Field, Fields, Ident, PathArguments};
 
 #[proc_macro_derive(QueryBuilder, attributes(query_builder_ignore, query_builder_rename))]
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -44,28 +41,12 @@ pub fn derive(input: TokenStream) -> TokenStream {
             }
             field
         })
-        .filter(|field| {
-            !field
-                .attrs
-                .iter()
-                .map(|attr| format!("{}", attr.path.segments.first().unwrap().ident))
-                .collect::<String>()
-                .contains("query_builder_ignore")
-        })
+        .filter(|field| gen::get_non_ignored_fields(field))
         .map(|field| field.ident.unwrap())
         .collect();
 
-    let field_idents_range: Vec<Ident> = field_idents
-        .iter()
-        .cloned()
-        .map(|name| format_ident!("{}{}", name, "_range"))
-        .collect();
-
-    let field_idents_str: Vec<String> = field_idents
-        .iter()
-        .cloned()
-        .map(|name| format!("{}", name))
-        .collect();
+    let field_idents_range: Vec<Ident> = gen::get_suffixed_idents(&field_idents, "_range");
+    let field_idents_str: Vec<String> = gen::idents_to_string(&field_idents);
     let common_functions = gen::common_functions();
 
     let output = quote! {
