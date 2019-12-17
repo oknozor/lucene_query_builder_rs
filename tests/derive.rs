@@ -23,13 +23,10 @@ fn should_serialize_simple_query() {
 
 #[test]
 fn should_quote_values_with_space() {
-    let query = Person::query_builder()
-        .name("Uncle Bob")
-        .build();
+    let query = Person::query_builder().name("Uncle Bob").build();
 
     assert_eq!(query, "query=name:\"Uncle Bob\"".to_string());
 }
-
 
 #[test]
 fn should_serialize_nested_query() {
@@ -65,7 +62,10 @@ fn should_gen_renamed_method() {
         .fullname("Bob Marley")
         .build();
 
-    assert_eq!(query, "query=name:Bob AND fullname:\"Bob Marley\"".to_string());
+    assert_eq!(
+        query,
+        "query=name:Bob AND fullname:\"Bob Marley\"".to_string()
+    );
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
-use syn::{Field, Meta, MetaNameValue, Lit};
+use syn::{Field, Lit, Meta, MetaNameValue};
 
 pub fn common_functions() -> TokenStream2 {
     quote! {
@@ -106,8 +106,6 @@ pub fn get_field_idents(fields: Vec<Field>) -> Vec<Ident> {
         .collect()
 }
 
-
-
 pub fn query_builder_fn(ident: &Ident, builder_ident: &Ident) -> TokenStream2 {
     quote! {
         impl #ident {
@@ -193,7 +191,9 @@ pub fn get_suffixed_idents(field_idents: &Vec<Ident>, suffix: &str) -> Vec<Ident
 }
 
 pub fn get_fields_attrs_meta(field: &Field) -> Vec<Meta> {
-    field.attrs.iter()
+    field
+        .attrs
+        .iter()
         .map(|attr| attr.parse_meta())
         .filter(|attr| attr.is_ok())
         .map(|attr| attr.unwrap())
@@ -203,10 +203,10 @@ pub fn get_fields_attrs_meta(field: &Field) -> Vec<Meta> {
 pub fn parse_renamed(attr: &Meta) -> Option<Ident> {
     match attr {
         Meta::NameValue(MetaNameValue {
-                            lit: Lit::Str(ref s),
-                            path,
-                            ..
-                        }) => {
+            lit: Lit::Str(ref s),
+            path,
+            ..
+        }) => {
             if path.is_ident("query_builder_rename") {
                 Some(format_ident!("{}", s.value()))
             } else {

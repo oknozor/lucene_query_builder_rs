@@ -5,7 +5,7 @@ mod gen;
 use proc_macro::TokenStream;
 use quote::format_ident;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Field, Fields, Ident, Meta, MetaNameValue, Lit};
+use syn::{parse_macro_input, Data, DeriveInput, Field, Fields, Ident, Lit, Meta, MetaNameValue};
 
 #[proc_macro_derive(QueryBuilder, attributes(query_builder_ignore, query_builder_rename))]
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -24,8 +24,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
         Data::Union(_) => panic!("The Builder macro is not to be used on union"),
     };
 
-    let attrs_metas: Vec<Vec<Meta>> = fields.iter()
-        .map(|field| gen::get_fields_attrs_meta(field)).collect();
+    let attrs_metas: Vec<Vec<Meta>> = fields
+        .iter()
+        .map(|field| gen::get_fields_attrs_meta(field))
+        .collect();
 
     let field_idents: Vec<Ident> = gen::get_field_idents(fields);
 
@@ -51,4 +53,3 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     TokenStream::from(output)
 }
-
