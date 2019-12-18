@@ -78,3 +78,20 @@ fn should_serialize_range() {
 
     assert_eq!(query, "query=age:[7 TO 77]".to_string());
 }
+
+#[derive(QueryBuilder)]
+struct PersonWithoutAnnotation {
+    name: String,
+    age: i32,
+}
+
+#[test]
+fn should_serialize_simple_query_on_struct_with_no_annotations() {
+    let query = PersonWithoutAnnotation::query_builder()
+        .name("Bob")
+        .or()
+        .name("Alice")
+        .build();
+
+    assert_eq!(query, "query=name:Bob OR name:Alice".to_string());
+}

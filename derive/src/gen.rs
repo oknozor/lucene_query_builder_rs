@@ -174,7 +174,7 @@ pub fn parse_renamed(attr: &Meta) -> Option<Ident> {
             if path.is_ident("query_builder_rename") {
                 Some(format_ident!("{}", s.value()))
             } else {
-                panic!("Unable to parse query_builder_rename_value")
+                None
             }
         }
         _ => None,
