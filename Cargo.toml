@@ -1,6 +1,6 @@
 [package]
 name = "lucene_query_builder"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Paul Delafosse <paul.delafosse@protonmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -9,12 +9,5 @@ documentation = "https://docs.rs/lucene_query_builder"
 readme = "crates-io.md"
 description = "A procmacro derive crate to generate lucene query builder for Rust structs :"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-proc-macro = true
-
 [dependencies]
-syn = "1.0.11"
-quote = "1.0.2"
-proc-macro2 = "1.0.6"
+lucene_query_builder_rs_derive = { path = "derive",  version = "0.2.1" }

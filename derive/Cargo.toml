@@ -1,0 +1,15 @@
+[package]
+name = "lucene_query_builder_rs_derive"
+version = "0.2.1"
+authors = ["Paul Delafosse <paul.delafosse@protonmail.com>"]
+edition = "2018"
+description = "This crate is used internally by [lucene_query_builder](https://crates.io/crates/lucene_query_builder)."
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0.11"
+quote = "1.0.2"
+proc-macro2 = "1.0.6"

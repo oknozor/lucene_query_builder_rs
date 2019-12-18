@@ -49,42 +49,6 @@ pub fn common_functions() -> TokenStream2 {
     }
 }
 
-pub fn prelude() -> TokenStream2 {
-    quote! {
-        use std::fmt;
-
-        enum Operator {
-            Or,
-            And,
-            End
-        }
-
-        struct QueryString(pub String);
-
-        impl fmt::Display for QueryString {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                if self.0.contains(" ") {
-                    write!(f, "\"{}\"", self.0)
-                } else {
-                    write!(f, "{}", self.0)
-                }
-            }
-        }
-
-
-        impl fmt::Display for Operator {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                match self {
-                    Self::Or => write!(f, " OR "),
-                    Self::And => write!(f, " AND "),
-                    Self::End => write!(f, ""),
-                }
-
-            }
-        }
-    }
-}
-
 pub fn get_field_idents(fields: Vec<Field>) -> Vec<Ident> {
     fields
         .iter()
