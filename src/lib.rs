@@ -10,6 +10,18 @@ pub enum Operator {
 
 pub struct QueryString(pub String);
 
+pub trait QueryBuilder {
+    type Output: QueryBuilderImpl;
+    fn query_builder() -> Self::Output;
+}
+
+pub trait QueryBuilderImpl {
+    fn build(&self) -> String;
+    fn build_escaped(&self) -> String {
+        self.build().replace(" ", "%20")
+    }
+}
+
 impl fmt::Display for QueryString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.0.contains(' ') {

@@ -27,16 +27,26 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let field_idents: Vec<Ident> = gen::get_field_idents(fields);
 
     let common_functions = gen::common_functions();
-    let query_builder_fn = gen::query_builder_fn(ident, &builder_ident);
-    let query_builder = gen::query_builder(&builder_ident);
+    let query_builder_fn = gen::new_query_builder_fn(&builder_ident);
+    let query_builder_struct = gen::query_builder_struct(&builder_ident);
     let query_field_fn = gen::query_field_fn(&field_idents);
     let range_query_field_fn = gen::range_query_field_fn(&field_idents);
 
     let output = quote! {
         use lucene_query_builder::*;
 
-        #query_builder_fn
-        #query_builder
+        #query_builder_struct
+
+        impl QueryBuilder for #ident {
+            type Output = #builder_ident;
+            #query_builder_fn
+        }
+
+        impl QueryBuilderImpl for #builder_ident {
+            fn build(&self) -> String {
+                self.build()
+            }
+        }
 
         impl #builder_ident {
             #query_field_fn

@@ -31,7 +31,7 @@ pub fn common_functions() -> TokenStream2 {
                 self
             }
 
-            pub fn build(&mut self) -> String {
+            pub fn build(&self) -> String {
                 format!("query={}", self.to_string_query())
             }
 
@@ -70,19 +70,17 @@ pub fn get_field_idents(fields: Vec<Field>) -> Vec<Ident> {
         .collect()
 }
 
-pub fn query_builder_fn(ident: &Ident, builder_ident: &Ident) -> TokenStream2 {
+pub fn new_query_builder_fn(builder_ident: &Ident) -> TokenStream2 {
     quote! {
-        impl #ident {
-            pub fn query_builder() -> #builder_ident {
+            fn query_builder() -> #builder_ident {
                 #builder_ident {
-                    query: vec![]
-                }
+                query: vec![]
             }
         }
     }
 }
 
-pub fn query_builder(builder_ident: &Ident) -> TokenStream2 {
+pub fn query_builder_struct(builder_ident: &Ident) -> TokenStream2 {
     quote! {
         pub struct #builder_ident {
             query: Vec<(String, Operator)>
@@ -94,7 +92,7 @@ pub fn query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
     let field_idents_str = idents_to_string(field_idents);
 
     quote! {
-       #(fn #field_idents(&mut self, value: &str) -> &mut Self {
+       #(pub fn #field_idents(&mut self, value: &str) -> &mut Self {
             let value = QueryString(value.into());
             let search = format!("{}:{}", #field_idents_str, value);
 
@@ -167,10 +165,10 @@ pub fn get_fields_attrs_meta(field: &Field) -> Vec<Meta> {
 pub fn parse_renamed(attr: &Meta) -> Option<Ident> {
     match attr {
         Meta::NameValue(MetaNameValue {
-            lit: Lit::Str(ref s),
-            path,
-            ..
-        }) => {
+                            lit: Lit::Str(ref s),
+                            path,
+                            ..
+                        }) => {
             if path.is_ident("query_builder_rename") {
                 Some(format_ident!("{}", s.value()))
             } else {
