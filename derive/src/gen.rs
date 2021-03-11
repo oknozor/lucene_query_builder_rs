@@ -94,7 +94,7 @@ pub fn query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
     let field_idents_str = idents_to_string(field_idents);
 
     quote! {
-       #(fn #field_idents(&mut self, value: &str) -> &mut Self {
+       #(pub fn #field_idents(&mut self, value: &str) -> &mut Self {
             let value = QueryString(value.into());
             let search = format!("{}:{}", #field_idents_str, value);
 

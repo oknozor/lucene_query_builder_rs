@@ -8,6 +8,7 @@ pub enum Operator {
     End,
 }
 
+#[derive(Debug, Clone)]
 pub struct QueryString(pub String);
 
 impl fmt::Display for QueryString {
