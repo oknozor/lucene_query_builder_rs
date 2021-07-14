@@ -49,7 +49,7 @@ pub fn common_functions() -> TokenStream2 {
     }
 }
 
-pub fn get_field_idents(fields: Vec<Field>) -> Vec<Ident> {
+pub fn get_field_idents(fields: Vec<Field>) -> Vec<(Ident, Ident)> {
     fields
         .iter()
         .cloned()
@@ -61,11 +61,24 @@ pub fn get_field_idents(fields: Vec<Field>) -> Vec<Ident> {
                 .map(|meta| parse_renamed(meta))
                 .find(|rename_ident| rename_ident.is_some());
 
-            if let Some(renamed) = opt_rename {
+            let opt_field_rename = attributes
+                .iter()
+                .map(|meta| parse_lucene_field_renamed(meta))
+                .find(|rename_field_ident| rename_field_ident.is_some());
+
+            let function_name = if let Some(renamed) = opt_rename {
                 renamed.unwrap()
             } else {
+                field.ident.clone().unwrap()
+            };
+
+            let lucene_field = if let Some(field_renamed) = opt_field_rename {
+                field_renamed.unwrap()
+            } else {
                 field.ident.unwrap()
-            }
+            };
+
+            (function_name, lucene_field)
         })
         .collect()
 }
@@ -90,11 +103,23 @@ pub fn query_builder(builder_ident: &Ident) -> TokenStream2 {
     }
 }
 
-pub fn query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
-    let field_idents_str = idents_to_string(field_idents);
+pub fn query_field_fn(field_idents: &[(Ident, Ident)]) -> TokenStream2 {
+    let function_names: Vec<Ident> = field_idents
+        .iter()
+        .map(|(func, _)| func.to_owned())
+        .collect();
+
+    let function_names = function_names.as_slice();
+
+    let lucene_field_names: Vec<Ident> =
+        field_idents.iter().map(|(_, luc)| luc.to_owned()).collect();
+
+    let lucene_field_names = lucene_field_names.as_slice();
+
+    let field_idents_str = idents_to_string(lucene_field_names);
 
     quote! {
-       #(pub fn #field_idents(&mut self, value: &str) -> &mut Self {
+       #(pub fn #function_names(&mut self, value: &str) -> &mut Self {
             let value = QueryString(value.into());
             let search = format!("{}:{}", #field_idents_str, value);
 
@@ -109,9 +134,14 @@ pub fn query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
     }
 }
 
-pub fn range_query_field_fn(field_idents: &[Ident]) -> TokenStream2 {
-    let field_idents_range = get_suffixed_idents(field_idents, "_range");
-    let field_idents_str = idents_to_string(field_idents);
+pub fn range_query_field_fn(field_idents: &[(Ident, Ident)]) -> TokenStream2 {
+    let function_names: Vec<Ident> = field_idents.iter().map(|(func, _)| func.clone()).collect();
+    let function_names = function_names.as_slice();
+    let lucene_field_names: Vec<Ident> = field_idents.iter().map(|(_, luc)| luc.clone()).collect();
+    let lucene_field_names = lucene_field_names.as_slice();
+
+    let field_idents_range = get_suffixed_idents(function_names, "_range");
+    let field_idents_str = idents_to_string(lucene_field_names);
 
     quote! {
        #(fn #field_idents_range(&mut self, from: &str, to: &str) -> &mut Self {
@@ -172,6 +202,23 @@ pub fn parse_renamed(attr: &Meta) -> Option<Ident> {
             ..
         }) => {
             if path.is_ident("query_builder_rename") {
+                Some(format_ident!("{}", s.value()))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+pub fn parse_lucene_field_renamed(attr: &Meta) -> Option<Ident> {
+    match attr {
+        Meta::NameValue(MetaNameValue {
+            lit: Lit::Str(ref s),
+            path,
+            ..
+        }) => {
+            if path.is_ident("query_builder_field") {
                 Some(format_ident!("{}", s.value()))
             } else {
                 None

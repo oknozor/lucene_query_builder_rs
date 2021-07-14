@@ -2,6 +2,8 @@ use lucene_query_builder::QueryBuilder;
 
 #[derive(QueryBuilder)]
 struct Person {
+    #[query_builder_field = "patronymic"]
+    #[query_builder_rename = "last_name"]
     name: String,
     age: i32,
     #[query_builder_ignore]
@@ -13,66 +15,79 @@ struct Person {
 #[test]
 fn should_serialize_simple_query() {
     let query = Person::query_builder()
-        .name("Bob")
+        .last_name("Bob")
         .or()
-        .name("Alice")
+        .last_name("Alice")
         .build();
 
-    assert_eq!(query, "query=name:Bob OR name:Alice".to_string());
+    assert_eq!(
+        query,
+        "query=patronymic:Bob OR patronymic:Alice".to_string()
+    );
 }
 
 #[test]
 fn should_quote_values_with_space() {
-    let query = Person::query_builder().name("Uncle Bob").build();
+    let query = Person::query_builder().last_name("Uncle Bob").build();
 
-    assert_eq!(query, "query=name:\"Uncle Bob\"".to_string());
+    assert_eq!(query, "query=patronymic:\"Uncle Bob\"".to_string());
 }
 
 #[test]
 fn should_serialize_nested_query() {
     let query = Person::query_builder()
-        .expr(Person::query_builder().name("Bob").or().name("Alice"))
+        .expr(
+            Person::query_builder()
+                .last_name("Bob")
+                .or()
+                .last_name("Alice"),
+        )
         .and()
         .age("22")
         .build();
 
     assert_eq!(
         query,
-        "query=(name:Bob OR name:Alice) AND age:22".to_string()
+        "query=(patronymic:Bob OR patronymic:Alice) AND age:22".to_string()
     );
 }
 
 #[test]
 fn should_serialize_proximity() {
     let query = Person::query_builder()
-        .name("Bob")
+        .last_name("Bob")
         .and()
-        .name("Alice")
+        .last_name("Alice")
         .proximity(4)
         .build();
 
-    assert_eq!(query, "query=name:Bob AND name:Alice~4".to_string());
+    assert_eq!(
+        query,
+        "query=patronymic:Bob AND patronymic:Alice~4".to_string()
+    );
 }
 
 #[test]
 fn should_gen_renamed_method() {
     let query = Person::query_builder()
-        .name("Bob")
+        .last_name("Bob")
         .and()
         .fullname("Bob Marley")
         .build();
 
     assert_eq!(
         query,
-        "query=name:Bob AND fullname:\"Bob Marley\"".to_string()
+        "query=patronymic:Bob AND complete_name:\"Bob Marley\"".to_string()
     );
 }
 
 #[test]
 fn should_serialize_range() {
-    let query = Person::query_builder().name_range("Bob", "Baz").build();
+    let query = Person::query_builder()
+        .last_name_range("Bob", "Baz")
+        .build();
 
-    assert_eq!(query, "query=name:[Bob TO Baz]".to_string());
+    assert_eq!(query, "query=patronymic:[Bob TO Baz]".to_string());
 
     let query = Person::query_builder().age_range("7", "77").build();
 

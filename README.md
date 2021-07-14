@@ -50,9 +50,9 @@ let query = Person::query_builder().age_range("7", "77").build();
 assert_eq!(query, "query=age:[7 TO 77]".to_string());
 ```
 
-### Rename fields
+### Rename builder functions and field names
 
-Use `#[query_builder_rename = "name"]` if you need to rename the generated method and field name : 
+Use `#[query_builder_rename = "name"]` if you need to rename the generated method : 
 
 ```rust
 #[derive(QueryBuilder)]
@@ -73,9 +73,36 @@ let query = Person::query_builder()
 
 assert_eq!(
     query,
+    "query=name:Bob AND complete_name:\"Bob Marley\"".to_string()
+);
+```
+
+If you need to rename the generated lucene field you can use `#[query_builder_field = "name"]. `
+
+```rust
+#[derive(QueryBuilder)]
+struct Person {
+    name: String,
+    age: i32,
+    #[query_builder_rename = "fullname"]
+    #[query_builder_field = "fullname"]
+    complete_name: String,
+}
+```
+
+```rust
+let query = Person::query_builder()
+    .name("Bob")
+    .and()
+    .fullname("Bob Marley")
+    .build();
+
+assert_eq!(
+    query,
     "query=name:Bob AND fullname:\"Bob Marley\"".to_string()
 );
 ```
+
 
 ### Ignore fields 
 

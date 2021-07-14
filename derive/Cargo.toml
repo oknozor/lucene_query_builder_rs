@@ -1,10 +1,11 @@
 [package]
 name = "lucene_query_builder_rs_derive"
-version = "0.2.4"
+version = "0.3.0"
 authors = ["Paul Delafosse <paul.delafosse@protonmail.com>"]
 edition = "2018"
 description = "This crate is used internally by [lucene_query_builder](https://crates.io/crates/lucene_query_builder)."
 license = "MIT"
+readme = "crates-io.md"
 
 [lib]
 proc-macro = true

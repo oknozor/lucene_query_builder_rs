@@ -7,7 +7,10 @@ use quote::format_ident;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Field, Fields, Ident};
 
-#[proc_macro_derive(QueryBuilder, attributes(query_builder_ignore, query_builder_rename))]
+#[proc_macro_derive(
+    QueryBuilder,
+    attributes(query_builder_ignore, query_builder_rename, query_builder_field)
+)]
 pub fn derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
@@ -24,7 +27,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
         Data::Union(_) => panic!("The Builder macro is not to be used on union"),
     };
 
-    let field_idents: Vec<Ident> = gen::get_field_idents(fields);
+    let field_idents: Vec<(Ident, Ident)> = gen::get_field_idents(fields);
 
     let common_functions = gen::common_functions();
     let query_builder_fn = gen::query_builder_fn(ident, &builder_ident);
