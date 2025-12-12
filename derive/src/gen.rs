@@ -32,7 +32,7 @@ pub fn common_functions() -> TokenStream2 {
             }
 
             pub fn build(&mut self) -> String {
-                format!("query={}", self.to_string_query())
+                self.to_string_query()
             }
 
             pub fn expr(&mut self, exp: &mut Self) -> &mut Self {

@@ -23,7 +23,7 @@ let query = Person::query_builder()
     .name("Alice")
     .build();
 
-assert_eq!(query, "query=name:Bob OR name:Alice".to_string());
+assert_eq!(query, "name:Bob OR name:Alice".to_string());
 ```
 
 
@@ -38,7 +38,7 @@ let query = Person::query_builder()
 
 assert_eq!(
     query,
-    "query=(name:Bob OR name:Alice) AND age:22".to_string()
+    "(name:Bob OR name:Alice) AND age:22".to_string()
 );
 ```
 
@@ -47,7 +47,7 @@ assert_eq!(
 ```rust
 let query = Person::query_builder().age_range("7", "77").build();
 
-assert_eq!(query, "query=age:[7 TO 77]".to_string());
+assert_eq!(query, "age:[7 TO 77]".to_string());
 ```
 
 ### Rename builder functions and field names
@@ -73,7 +73,7 @@ let query = Person::query_builder()
 
 assert_eq!(
     query,
-    "query=name:Bob AND complete_name:\"Bob Marley\"".to_string()
+    "name:Bob AND complete_name:\"Bob Marley\"".to_string()
 );
 ```
 
@@ -99,7 +99,7 @@ let query = Person::query_builder()
 
 assert_eq!(
     query,
-    "query=name:Bob AND fullname:\"Bob Marley\"".to_string()
+    "name:Bob AND fullname:\"Bob Marley\"".to_string()
 );
 ```
 

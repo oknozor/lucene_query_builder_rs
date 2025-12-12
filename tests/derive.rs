@@ -1,6 +1,7 @@
 use lucene_query_builder::QueryBuilder;
 
 #[derive(QueryBuilder)]
+#[allow(unused)]
 struct Person {
     #[query_builder_field = "patronymic"]
     #[query_builder_rename = "last_name"]
@@ -20,17 +21,14 @@ fn should_serialize_simple_query() {
         .last_name("Alice")
         .build();
 
-    assert_eq!(
-        query,
-        "query=patronymic:Bob OR patronymic:Alice".to_string()
-    );
+    assert_eq!(query, "patronymic:Bob OR patronymic:Alice".to_string());
 }
 
 #[test]
 fn should_quote_values_with_space() {
     let query = Person::query_builder().last_name("Uncle Bob").build();
 
-    assert_eq!(query, "query=patronymic:\"Uncle Bob\"".to_string());
+    assert_eq!(query, "patronymic:\"Uncle Bob\"".to_string());
 }
 
 #[test]
@@ -48,7 +46,7 @@ fn should_serialize_nested_query() {
 
     assert_eq!(
         query,
-        "query=(patronymic:Bob OR patronymic:Alice) AND age:22".to_string()
+        "(patronymic:Bob OR patronymic:Alice) AND age:22".to_string()
     );
 }
 
@@ -61,10 +59,7 @@ fn should_serialize_proximity() {
         .proximity(4)
         .build();
 
-    assert_eq!(
-        query,
-        "query=patronymic:Bob AND patronymic:Alice~4".to_string()
-    );
+    assert_eq!(query, "patronymic:Bob AND patronymic:Alice~4".to_string());
 }
 
 #[test]
@@ -77,7 +72,7 @@ fn should_gen_renamed_method() {
 
     assert_eq!(
         query,
-        "query=patronymic:Bob AND complete_name:\"Bob Marley\"".to_string()
+        "patronymic:Bob AND complete_name:\"Bob Marley\"".to_string()
     );
 }
 
@@ -87,11 +82,11 @@ fn should_serialize_range() {
         .last_name_range("Bob", "Baz")
         .build();
 
-    assert_eq!(query, "query=patronymic:[Bob TO Baz]".to_string());
+    assert_eq!(query, "patronymic:[Bob TO Baz]".to_string());
 
     let query = Person::query_builder().age_range("7", "77").build();
 
-    assert_eq!(query, "query=age:[7 TO 77]".to_string());
+    assert_eq!(query, "age:[7 TO 77]".to_string());
 }
 
 #[derive(QueryBuilder)]
@@ -108,5 +103,5 @@ fn should_serialize_simple_query_on_struct_with_no_annotations() {
         .name("Alice")
         .build();
 
-    assert_eq!(query, "query=name:Bob OR name:Alice".to_string());
+    assert_eq!(query, "name:Bob OR name:Alice".to_string());
 }
