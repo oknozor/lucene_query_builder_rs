@@ -89,6 +89,97 @@ fn should_serialize_range() {
     assert_eq!(query, "age:[7 TO 77]".to_string());
 }
 
+#[test]
+fn should_serialize_leading_not() {
+    let query = Person::query_builder().not().last_name("Bob").build();
+
+    assert_eq!(query, "NOT patronymic:Bob".to_string());
+}
+
+#[test]
+fn should_serialize_and_not() {
+    let query = Person::query_builder()
+        .last_name("Bob")
+        .and_not()
+        .age("22")
+        .build();
+
+    assert_eq!(query, "patronymic:Bob AND NOT age:22".to_string());
+}
+
+#[test]
+fn should_serialize_or_not() {
+    let query = Person::query_builder()
+        .last_name("Bob")
+        .or_not()
+        .age("22")
+        .build();
+
+    assert_eq!(query, "patronymic:Bob OR NOT age:22".to_string());
+}
+
+#[test]
+fn should_serialize_not_after_separator() {
+    let query = Person::query_builder()
+        .last_name("Bob")
+        .or()
+        .not()
+        .last_name("Alice")
+        .build();
+
+    assert_eq!(query, "patronymic:Bob OR NOT patronymic:Alice".to_string());
+}
+
+#[test]
+fn should_serialize_implicit_and_not() {
+    let query = Person::query_builder()
+        .last_name("Bob")
+        .not()
+        .age("22")
+        .build();
+
+    assert_eq!(query, "patronymic:Bob AND NOT age:22".to_string());
+}
+
+#[test]
+fn should_serialize_not_group() {
+    let query = Person::query_builder()
+        .not()
+        .expr(
+            Person::query_builder()
+                .last_name("Bob")
+                .or()
+                .last_name("Alice"),
+        )
+        .build();
+
+    assert_eq!(
+        query,
+        "NOT (patronymic:Bob OR patronymic:Alice)".to_string()
+    );
+}
+
+#[test]
+fn should_serialize_and_not_group() {
+    let query = Person::query_builder()
+        .last_name("Bob")
+        .and_not()
+        .expr(Person::query_builder().age("22").or().age("33"))
+        .build();
+
+    assert_eq!(
+        query,
+        "patronymic:Bob AND NOT (age:22 OR age:33)".to_string()
+    );
+}
+
+#[test]
+fn should_serialize_not_range() {
+    let query = Person::query_builder().not().age_range("7", "77").build();
+
+    assert_eq!(query, "NOT age:[7 TO 77]".to_string());
+}
+
 #[derive(QueryBuilder)]
 struct PersonWithoutAnnotation {
     name: String,
