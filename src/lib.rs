@@ -11,6 +11,34 @@ pub enum Operator {
 #[derive(Debug, Clone)]
 pub struct QueryString(pub String);
 
+pub struct QueryTerm {
+    pub negate: bool,
+    pub value: String,
+    pub operator: Operator,
+}
+
+impl QueryTerm {
+    pub fn new(value: String) -> Self {
+        Self {
+            negate: false,
+            value,
+            operator: Operator::End,
+        }
+    }
+
+    pub fn placeholder(negate: bool) -> Self {
+        Self {
+            negate,
+            value: String::new(),
+            operator: Operator::End,
+        }
+    }
+
+    pub fn is_placeholder(&self) -> bool {
+        self.value.is_empty()
+    }
+}
+
 impl fmt::Display for QueryString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.0.contains(' ') {
@@ -18,6 +46,16 @@ impl fmt::Display for QueryString {
         } else {
             write!(f, "{}", self.0)
         }
+    }
+}
+
+impl fmt::Display for QueryTerm {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.negate {
+            write!(f, "NOT ")?;
+        }
+
+        write!(f, "{}{}", self.value, self.operator)
     }
 }
 

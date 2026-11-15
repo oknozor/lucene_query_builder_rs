@@ -26,7 +26,6 @@ let query = Person::query_builder()
 assert_eq!(query, "name:Bob OR name:Alice".to_string());
 ```
 
-
 ### Nested query
 
 ```rust
@@ -50,9 +49,41 @@ let query = Person::query_builder().age_range("7", "77").build();
 assert_eq!(query, "age:[7 TO 77]".to_string());
 ```
 
+### NOT operator
+
+Use `not`, `and_not` or `or_not` to negate a query :
+
+```rust
+let query = Person::query_builder()
+    .name("Bob")
+    .and_not()
+    .age("22")
+    .build();
+
+assert_eq!(query, "name:Bob AND NOT age:22".to_string());
+```
+
+`not` can also be used to negate a range query or a nested expression :
+
+```rust
+let query = Person::query_builder()
+    .not()
+    .expr(Person::query_builder().name("Bob").or().name("Alice"))
+    .build();
+
+assert_eq!(query, "NOT (name:Bob OR name:Alice)".to_string());
+
+let query = Person::query_builder()
+    .not()
+    .age_range("7", "77")
+    .build();
+
+assert_eq!(query, "NOT age:[7 TO 77]".to_string());
+```
+
 ### Rename builder functions and field names
 
-Use `#[query_builder_rename = "name"]` if you need to rename the generated method : 
+Use `#[query_builder_rename = "name"]` if you need to rename the generated method :
 
 ```rust
 #[derive(QueryBuilder)]
@@ -103,7 +134,6 @@ assert_eq!(
 );
 ```
 
-
-### Ignore fields 
+### Ignore fields
 
 If you need to ignore a field use the attribute macro : `#[query_builder_ignore]`

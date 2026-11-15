@@ -6,26 +6,60 @@ pub fn common_functions() -> TokenStream2 {
     quote! {
           pub fn or(&mut self) -> &mut Self {
                 if let Some(last) = self.query.last_mut() {
-                    last.1 = Operator::Or;
+                    last.operator = Operator::Or;
                 };
 
-                self.query.push(("".into(), Operator::End));
+                self.query.push(QueryTerm::placeholder(false));
                 self
           }
 
           pub fn and(&mut self) -> &mut Self {
                if let Some(last) = self.query.last_mut() {
-                    last.1 = Operator::And;
+                    last.operator = Operator::And;
                 };
 
-                self.query.push(("".into(), Operator::End));
+                self.query.push(QueryTerm::placeholder(false));
+                self
+          }
+
+          pub fn not(&mut self) -> &mut Self {
+                match self.query.last_mut() {
+                    Some(last) if !last.is_placeholder() => {
+                        if matches!(last.operator, Operator::End) {
+                            last.operator = Operator::And;
+                        };
+
+                        self.query.push(QueryTerm::placeholder(true));
+                    }
+                    Some(last) => last.negate = true,
+                    None => self.query.push(QueryTerm::placeholder(true)),
+                };
+
+                self
+          }
+
+          pub fn and_not(&mut self) -> &mut Self {
+               if let Some(last) = self.query.last_mut() {
+                    last.operator = Operator::And;
+                };
+
+                self.query.push(QueryTerm::placeholder(true));
+                self
+          }
+
+          pub fn or_not(&mut self) -> &mut Self {
+               if let Some(last) = self.query.last_mut() {
+                    last.operator = Operator::Or;
+                };
+
+                self.query.push(QueryTerm::placeholder(true));
                 self
           }
 
             pub fn proximity(&mut self, proximity: i32) -> &mut Self {
                 if let Some(last) = self.query.last_mut() {
                     let prox = &format!("~{}", proximity);
-                    last.0.push_str(prox);
+                    last.value.push_str(prox);
                 };
 
                 self
@@ -37,13 +71,18 @@ pub fn common_functions() -> TokenStream2 {
 
             pub fn expr(&mut self, exp: &mut Self) -> &mut Self {
                 let value = format!("({})", exp.to_string_query());
-                self.query.push((value, Operator::End));
+
+                match self.query.last_mut() {
+                    Some(last) if last.is_placeholder() => last.value = value,
+                    _ => self.query.push(QueryTerm::new(value)),
+                };
+
                 self
             }
 
             fn to_string_query(&self) -> String {
                 self.query.iter()
-                    .map(|(value, separator)| format!("{}{}", value, separator))
+                    .map(|term| term.to_string())
                     .collect::<String>()
             }
     }
@@ -98,7 +137,7 @@ pub fn query_builder_fn(ident: &Ident, builder_ident: &Ident) -> TokenStream2 {
 pub fn query_builder(builder_ident: &Ident) -> TokenStream2 {
     quote! {
         pub struct #builder_ident {
-            query: Vec<(String, Operator)>
+            query: Vec<QueryTerm>
         }
     }
 }
@@ -124,9 +163,9 @@ pub fn query_field_fn(field_idents: &[(Ident, Ident)]) -> TokenStream2 {
             let search = format!("{}:{}", #field_idents_str, value);
 
             if let Some(last) = self.query.last_mut() {
-                last.0 = search;
+                last.value = search;
             } else {
-                self.query.push((search, Operator::End));
+                self.query.push(QueryTerm::new(search));
             }
 
             self
@@ -150,9 +189,9 @@ pub fn range_query_field_fn(field_idents: &[(Ident, Ident)]) -> TokenStream2 {
             let search = format!("{}:[{} TO {}]", #field_idents_str, from, to);
 
             if let Some(last) = self.query.last_mut() {
-                last.0 = search;
+                last.value = search;
             } else {
-                self.query.push((search, Operator::End));
+                self.query.push(QueryTerm::new(search));
             }
             self
         })*
